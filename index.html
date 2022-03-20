@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+            * {
+                font-family: 'Poppins', sans-serif;
+                color: #FFFFFF
+            }
+            body {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                margin: 0;
+            }
+            .content {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                background-image: linear-gradient(150deg, #181818, #414141)
+            }
+            .container {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
+                height: 100%;
+                max-width: 800px;
+                max-height: 450px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .section {
+                width: 50%;
+                position: relative;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .track-cover {
+                background-color: #333333;
+                width: 300px;
+                height: 300px;
+                border-radius: 10px;
+                padding: 0;
+                margin: 0;
+                box-shadow: 0px 0px 7.5px rgba(0, 0, 0, 0.5)
+            }
+            .track-title {
+                font-size: 27.5px;
+                font-weight: 600;
+            }
+            .track-artist {
+                color: #DDDDDD;
+                font-weight: 600;
+            }
+            .track-info {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+            .divider {
+                padding: 10px;
+                height: 100%;
+                display: none;
+            }
+            .sign-in-container {
+                position: absolute;
+                top: 0;
+                right: 0;
+                display: flex;
+                font-size: 13px;
+                color: #DDDDDD;
+                margin: 10px;
+                padding: 5px;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            .sign-in-container-user {
+                margin-left: 5px;
+            }
+            #info {
+                width: 40%;
+            }
+            .tabs {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .tab {
+                width: 100%;
+                height: 100%;
+                display: none;
+                align-items: center;
+                justify-content: center;
+            }
+            .frame {
+                text-align: center;
+            }
+            .heading {
+                font-size: 30px;
+                font-weight: 600;
+                margin-bottom: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="content">
+            <div class="sign-in-container">
+                <div class="sign-in-container-text">Signed in as</div>
+                <div class="sign-in-container-user"></div>
+            </div>
+            <div class="container">
+                <div class="tabs">
+                    <div class="tab">
+                        <div class="frame">
+                            <div class="heading">Spotify Connect</div>
+                            <div class="description"></div>
+                        </div>
+                    </div>
+                    <div class="tab">
+                        <div class="section">
+                            <img class="track-cover">
+                        </div>
+                        <div class="section" id="info">
+                            <div class="track-info">
+                                <div class="track-title"></div>
+                                <div class="divider"></div>
+                                <div class="track-artist"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script>
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            const Client = (function() {
+                const info = {
+                    response_type: "code",
+                    client_id: "0b03e149303f41669f3c4a34c576f298",
+                    state: "w1rojkhpvzrcrw4z",
+                    scope: "user-read-playback-state user-modify-playback-state user-read-currently-playing streaming app-remote-control",
+                    redirect_uri: window.location.href,
+                    client_secret: "8706bbc78b0140bd9d17938411a1003a",
+                    name: "Spotify for Android Auto"
+                }
+                const refresh = async (token) => {
+                    const result = await fetch("https://accounts.spotify.com/api/token", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded",
+                            "Authorization": "Basic " + btoa(info.client_id + ":" + info.client_secret)
+                        },
+                        body: "grant_type=refresh_token&refresh_token=" + localStorage.getItem("refresh_token")
+                    })
+                    const data = await result.json()
+                    return data.access_token
+                }
+                const switchTab = async (number) => {
+                    const tabs = document.getElementsByClassName("tab")
+                    for (var tab in tabs) {
+                        tab = [tab, tabs[tab]]
+                        if (tab[1].id !== undefined) {
+                            if (parseInt(tab[0]) === number) {
+                                tab[1].style.display = "flex"
+                            } else {
+                                tab[1].style.display = "none"
+                            }
+                        }
+                    }
+                }
+                const authorize = async () => {
+                    if (localStorage.getItem("token") === null) {
+                        if (window.location.search.length > 0) {
+                            const params = new URLSearchParams(window.location.search)
+                            let url = "https://accounts.spotify.com/api/token"
+                            let body = "grant_type=authorization_code"
+                            body += "&code=" + params.get("code")
+                            body += "&redirect_uri=" + encodeURI(info.redirect_uri.split("?")[0])
+                            body += "&client_id" + info.client_id 
+                            body += "&client_secret=" + info.client_secret
+                            const result = await fetch(url, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/x-www-form-urlencoded",
+                                    "Authorization": "Basic " + btoa(info.client_id + ":" + info.client_secret)
+                                },
+                                body: body
+                            })
+                            const data = await result.json()
+                            localStorage.setItem("token", data.access_token)
+                            localStorage.setItem("refresh_token", data.refresh_token)
+                            window.location.href = info.redirect_uri.split("?")[0]
+                        } else {
+                            let url = "https://accounts.spotify.com/authorize?"
+                            url += "client_id=" + info.client_id
+                            url += "&response_type=code"
+                            url += "&redirect_uri=" + encodeURI(info.redirect_uri)
+                            url += "&show_dialog=true"
+                            url += "&scope=" + info.scope
+                            window.location.replace(url)
+                        }
+                    } else {
+                        const result = await fetch("https://api.spotify.com/v1/me", {
+                            method: "GET",
+                            headers: {
+                                "Accept": "application/json",
+                                "Content-Type": "application/json",
+                                "Authorization": "Bearer " + localStorage.getItem("token")
+                            }
+                        })
+                        const data = await result.json()
+                        if (data.error) {
+                            localStorage.setItem("token", await refresh(localStorage.getItem("token")))
+                            location.reload()
+                        } else {
+                            return {
+                                data: data,
+                                token: localStorage.getItem("token")
+                            }
+                        }
+                    }
+                }
+                authorize().then(data => {
+                    const player = new Spotify.Player({
+                        name: info.name,
+                        getOAuthToken: cb => { cb(data.token) },
+                        volume: 0.25
+                    })
+                    player.addListener("ready", ({ device_id }) => {
+                        switchTab(0)
+                        document.getElementsByClassName("description")[0].innerHTML = `Connect your Phone to "${info.name}"<br>from the Spotify App.`
+                        document.getElementsByClassName("sign-in-container-user")[0].textContent = data.data.id
+                    })
+                    player.addListener('player_state_changed', ({
+                        position,
+                        duration,
+                        track_window: { current_track }
+                    }) => {
+                        switchTab(1)
+                        const track = {
+                            artist: {
+                                name: current_track.artists[0].name,
+                                id: current_track.artists[0].uri.split(":")[current_track.artists[0].uri.split(":").length-1]
+                            },
+                            name: current_track.name,
+                            type: current_track.type,
+                            album: current_track.album,
+                            imageCover: current_track.album.images[0],
+                            duration: duration,
+                            position: position
+                        }
+                        document.getElementsByClassName("track-cover")[0].src = track.imageCover.url
+                        document.getElementsByClassName("track-title")[0].textContent = track.name
+                        document.getElementsByClassName("track-artist")[0].textContent = track.artist.name
+                        document.getElementsByClassName("track-info")[0].style.display = "flex"
+                        document.getElementsByClassName("divider")[0].style.display = "block"
+                        if (document.getElementsByClassName("track-info")[0].offsetWidth === document.getElementById("info").offsetWidth) {
+                            document.getElementsByClassName("track-info")[0].style.display = "block"
+                            document.getElementsByClassName("divider")[0].style.display = "none"
+                        } else {
+                            document.getElementsByClassName("track-info")[0].style.display = "flex"
+                            document.getElementsByClassName("divider")[0].style.display = "block"
+                        }
+                    })
+                    player.addListener('not_ready', ({ device_id }) => {
+                        console.log('Device ID has gone offline', device_id);
+                    });
+
+                    player.addListener('initialization_error', ({ message }) => {
+                        console.error(message);
+                    });
+
+                    player.addListener('authentication_error', ({ message }) => {
+                        console.error(message);
+                    });
+
+                    player.addListener('account_error', ({ message }) => {
+                        console.error(message);
+                    });
+                    player.connect()
+                })
+            })()
+        }
+    </script>
+</html>
