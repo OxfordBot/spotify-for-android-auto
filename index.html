@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title></title>
+        <title>Spotify for Android Auto</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
             * {
@@ -15,6 +16,7 @@
                 right: 0;
                 bottom: 0;
                 margin: 0;
+                outline: 0;
             }
             .content {
                 position: relative;
@@ -111,6 +113,24 @@
                 font-weight: 600;
                 margin-bottom: 5px;
             }
+            .option-btn {
+                background-color: rgba(0, 0, 0, 0);
+                border: 0;
+                border-radius: 50%;
+                padding: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .options {
+                padding: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: left;
+            }
+            .option-btn img {
+                width: 25px;
+            }
         </style>
     </head>
     <body>
@@ -118,6 +138,11 @@
             <div class="sign-in-container">
                 <div class="sign-in-container-text">Signed in as</div>
                 <div class="sign-in-container-user"></div>
+            </div>
+            <div class="options">
+                <button class="option-btn" id="fullscreen-btn">
+                    <img src="https://img.icons8.com/fluency-systems-filled/48/ffffff/full-screen.png"/>
+                </button>
             </div>
             <div class="container">
                 <div class="tabs">
@@ -243,6 +268,12 @@
                         switchTab(0)
                         document.getElementsByClassName("description")[0].innerHTML = `Connect your Phone to "${info.name}"<br>from the Spotify App.`
                         document.getElementsByClassName("sign-in-container-user")[0].textContent = data.data.id
+                        document.getElementById("fullscreen-btn").onclick = function() {
+                            if (!window.screenTop && !window.screenY) {
+                                document.documentElement.requestFullscreen()
+                            }
+                            
+                        }
                     })
                     player.addListener('player_state_changed', ({
                         position,
