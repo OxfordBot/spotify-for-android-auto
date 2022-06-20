@@ -18,6 +18,14 @@
                 margin: 0;
                 outline: 0;
             }
+				button {
+					border: 1px solid #000000;
+					color: #000000;
+					padding: 2.5px;
+					padding-left: 7.5px;
+					padding-right: 7.5px;
+					margin-left: 1px;
+				}
             .content {
                 position: relative;
                 width: 100%;
@@ -131,10 +139,25 @@
             .option-btn img {
                 width: 25px;
             }
+				.control-centre {
+					position: absolute;
+					bottom: 0;
+					margin-left: auto;
+					margin-right: auto;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					padding-bottom: 5px;
+					padding-left: 5px;
+				}
         </style>
     </head>
     <body>
         <div class="content">
+		  		<div class="control-centre">
+					<button id="reset-btn">Reset</button>
+					<button id="login-btn">Login</button>
+				</div>
             <div class="sign-in-container">
                 <div class="sign-in-container-text">Signed in as</div>
                 <div class="sign-in-container-user"></div>
@@ -258,7 +281,11 @@
                         }
                     }
                 }
-                authorize().then(data => {
+					 document.getElementById("reset-btn").onclick = function() {
+					 	localStorage.clear()
+					 }
+					 document.getElementById("login-btn").onclick = function() {
+					 	authorize().then(data => {
                     const player = new Spotify.Player({
                         name: info.name,
                         getOAuthToken: cb => { cb(data.token) },
@@ -323,6 +350,7 @@
                     });
                     player.connect()
                 })
+					 }
             })()
         }
     </script>
